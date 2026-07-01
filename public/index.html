@@ -241,13 +241,43 @@
   .palpite-item{
     display:flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 13px;
-    padding: 6px 0;
+    padding: 6px 8px;
     border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .palpite-item .palpite-info{
+    display:flex;
+    align-items: center;
+    gap: 8px;
   }
   .palpite-item .placar{
     font-family:'Space Mono', monospace;
     font-weight: 700;
+  }
+  .palpite-item .selo{
+    font-family:'Space Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .palpite-item.acertou-exato{
+    background: rgba(30,125,50,0.12);
+    border-radius: 4px;
+  }
+  .palpite-item.acertou-exato .selo{
+    background: #1e7d32;
+    color: white;
+  }
+  .palpite-item.acertou-vencedor{
+    background: rgba(212,175,55,0.15);
+    border-radius: 4px;
+  }
+  .palpite-item.acertou-vencedor .selo{
+    background: var(--gold);
+    color: var(--ink);
   }
 </style>
 </head>
@@ -437,18 +467,18 @@ function criarCardJogo(jogo) {
   `;
 
   const form = card.querySelector('form');
-  form.addEventListener('submit', (e) => enviarPalpite(e, jogo.id));
+  form.addEventListener('submit', (e) => enviarPalpite(e, jogo));
 
-  carregarPalpites(jogo.id);
+  carregarPalpites(jogo);
 
   return card;
 }
 
-async function enviarPalpite(e, jogoId) {
+async function enviarPalpite(e, jogo) {
   e.preventDefault();
   const form = e.target;
   const btn = form.querySelector('button');
-  const msg = document.getElementById(`msg-${jogoId}`);
+  const msg = document.getElementById(`msg-${jogo.id}`);
 
   const nome = form.nome.value.trim();
   const placar_casa = parseInt(form.placar_casa.value, 10);
@@ -462,7 +492,7 @@ async function enviarPalpite(e, jogoId) {
 
   btn.disabled = true;
   try {
-    const res = await fetch(`/api/jogos/${jogoId}/palpites`, {
+    const res = await fetch(`/api/jogos/${jogo.id}/palpites`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, placar_casa, placar_fora })
@@ -470,7 +500,7 @@ async function enviarPalpite(e, jogoId) {
     if (!res.ok) throw new Error();
     msg.textContent = `Palpite salvo: ${nome} — ${placar_casa} x ${placar_fora}`;
     msg.className = 'msg ok';
-    carregarPalpites(jogoId);
+    carregarPalpites(jogo);
   } catch (err) {
     msg.textContent = 'Erro ao salvar. Tenta de novo.';
     msg.className = 'msg erro';
@@ -479,19 +509,45 @@ async function enviarPalpite(e, jogoId) {
   }
 }
 
-async function carregarPalpites(jogoId) {
-  const lista = document.getElementById(`lista-${jogoId}`);
-  const resumo = document.getElementById(`resumo-${jogoId}`);
+async function carregarPalpites(jogo) {
+  const lista = document.getElementById(`lista-${jogo.id}`);
+  const resumo = document.getElementById(`resumo-${jogo.id}`);
+  const temResultado = jogo.placar_casa_real !== null && jogo.placar_casa_real !== undefined;
+
   try {
-    const res = await fetch(`/api/jogos/${jogoId}/palpites`);
+    const res = await fetch(`/api/jogos/${jogo.id}/palpites`);
     const palpites = await res.json();
     resumo.textContent = `ver palpites (${palpites.length})`;
-    lista.innerHTML = palpites.map(p => `
-      <div class="palpite-item">
-        <span>${p.nome}</span>
-        <span class="placar">${p.placar_casa} x ${p.placar_fora}</span>
-      </div>
-    `).join('') || '<div class="palpite-item"><span>Nenhum palpite ainda</span></div>';
+
+    lista.innerHTML = palpites.map(p => {
+      let classeExtra = '';
+      let selo = '';
+
+      if (temResultado) {
+        const acertouExato = p.placar_casa === jogo.placar_casa_real && p.placar_fora === jogo.placar_fora_real;
+        const sinalPalpite = Math.sign(p.placar_casa - p.placar_fora);
+        const sinalReal = Math.sign(jogo.placar_casa_real - jogo.placar_fora_real);
+        const acertouVencedor = sinalPalpite === sinalReal;
+
+        if (acertouExato) {
+          classeExtra = 'acertou-exato';
+          selo = '✓ placar exato';
+        } else if (acertouVencedor) {
+          classeExtra = 'acertou-vencedor';
+          selo = '✓ vencedor';
+        }
+      }
+
+      return `
+        <div class="palpite-item ${classeExtra}">
+          <span>${p.nome}</span>
+          <span class="palpite-info">
+            ${selo ? `<span class="selo">${selo}</span>` : ''}
+            <span class="placar">${p.placar_casa} x ${p.placar_fora}</span>
+          </span>
+        </div>
+      `;
+    }).join('') || '<div class="palpite-item"><span>Nenhum palpite ainda</span></div>';
   } catch (err) {
     lista.innerHTML = '<div class="palpite-item"><span>Erro ao carregar</span></div>';
   }
