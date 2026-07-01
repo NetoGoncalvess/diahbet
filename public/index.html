@@ -147,7 +147,15 @@
   }
   .time-casa{ justify-content: flex-end; flex: 1 1 auto; }
   .time-fora{ justify-content: flex-start; flex: 1 1 auto; }
-  .bandeira{ font-size: 22px; line-height: 1; }
+  .bandeira{
+    width: 26px;
+    height: auto;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    display: block;
+    flex-shrink: 0;
+  }
+  .bandeira-fallback{ font-size: 20px; }
   .confronto .vs{
     font-family:'Space Mono', monospace;
     font-size: 13px;
@@ -316,65 +324,66 @@ function formatarCabecalhoDia(chave) {
   return `${diaSemanaCap}, ${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}`;
 }
 
-// Mapa de bandeiras por nome de pais/selecao (em portugues, como cadastrado no admin)
-const BANDEIRAS = {
-  'méxico': '🇲🇽', 'mexico': '🇲🇽',
-  'equador': '🇪🇨',
-  'inglaterra': '🏴',
-  'rd congo': '🇨🇩', 'r.d. congo': '🇨🇩', 'república democrática do congo': '🇨🇩',
-  'bélgica': '🇧🇪', 'belgica': '🇧🇪',
-  'senegal': '🇸🇳',
-  'estados unidos': '🇺🇸', 'eua': '🇺🇸',
-  'bósnia e herzegovina': '🇧🇦', 'bosnia e herzegovina': '🇧🇦',
-  'espanha': '🇪🇸',
-  'áustria': '🇦🇹', 'austria': '🇦🇹',
-  'portugal': '🇵🇹',
-  'croácia': '🇭🇷', 'croacia': '🇭🇷',
-  'suíça': '🇨🇭', 'suica': '🇨🇭',
-  'argélia': '🇩🇿', 'argelia': '🇩🇿',
-  'austrália': '🇦🇺', 'australia': '🇦🇺',
-  'egito': '🇪🇬',
-  'argentina': '🇦🇷',
-  'cabo verde': '🇨🇻',
-  'colômbia': '🇨🇴', 'colombia': '🇨🇴',
-  'gana': '🇬🇭',
-  'brasil': '🇧🇷',
-  'noruega': '🇳🇴',
-  'costa do marfim': '🇨🇮',
-  'japão': '🇯🇵', 'japao': '🇯🇵',
-  'frança': '🇫🇷', 'franca': '🇫🇷',
-  'alemanha': '🇩🇪',
-  'holanda': '🇳🇱', 'países baixos': '🇳🇱', 'paises baixos': '🇳🇱',
-  'itália': '🇮🇹', 'italia': '🇮🇹',
-  'uruguai': '🇺🇾',
-  'chile': '🇨🇱',
-  'paraguai': '🇵🇾',
-  'peru': '🇵🇪',
-  'canadá': '🇨🇦', 'canada': '🇨🇦',
-  'coreia do sul': '🇰🇷', 'coréia do sul': '🇰🇷',
-  'marrocos': '🇲🇦',
-  'panamá': '🇵🇦', 'panama': '🇵🇦',
-  'irã': '🇮🇷', 'ira': '🇮🇷',
-  'catar': '🇶🇦', 'qatar': '🇶🇦',
-  'arábia saudita': '🇸🇦', 'arabia saudita': '🇸🇦',
-  'polônia': '🇵🇱', 'polonia': '🇵🇱',
-  'dinamarca': '🇩🇰',
-  'sérvia': '🇷🇸', 'servia': '🇷🇸',
-  'ucrânia': '🇺🇦', 'ucrania': '🇺🇦',
-  'tunísia': '🇹🇳', 'tunisia': '🇹🇳',
-  'jordânia': '🇯🇴', 'jordania': '🇯🇴',
-  'uzbequistão': '🇺🇿', 'uzbequistao': '🇺🇿',
-  'haiti': '🇭🇹',
-  'escócia': '🏴', 'escocia': '🏴',
-  'nova zelândia': '🇳🇿', 'nova zelandia': '🇳🇿',
-  'nigéria': '🇳🇬', 'nigeria': '🇳🇬',
-  'áfrica do sul': '🇿🇦', 'africa do sul': '🇿🇦',
+// Mapa de codigo de pais (ISO) por nome de selecao, usado pra buscar a imagem da bandeira
+const CODIGOS_PAIS = {
+  'méxico': 'mx', 'mexico': 'mx',
+  'equador': 'ec',
+  'inglaterra': 'gb-eng',
+  'rd congo': 'cd', 'r.d. congo': 'cd', 'república democrática do congo': 'cd',
+  'bélgica': 'be', 'belgica': 'be',
+  'senegal': 'sn',
+  'estados unidos': 'us', 'eua': 'us',
+  'bósnia e herzegovina': 'ba', 'bosnia e herzegovina': 'ba',
+  'espanha': 'es',
+  'áustria': 'at', 'austria': 'at',
+  'portugal': 'pt',
+  'croácia': 'hr', 'croacia': 'hr',
+  'suíça': 'ch', 'suica': 'ch',
+  'argélia': 'dz', 'argelia': 'dz',
+  'austrália': 'au', 'australia': 'au',
+  'egito': 'eg',
+  'argentina': 'ar',
+  'cabo verde': 'cv',
+  'colômbia': 'co', 'colombia': 'co',
+  'gana': 'gh',
+  'brasil': 'br',
+  'noruega': 'no',
+  'costa do marfim': 'ci',
+  'japão': 'jp', 'japao': 'jp',
+  'frança': 'fr', 'franca': 'fr',
+  'alemanha': 'de',
+  'holanda': 'nl', 'países baixos': 'nl', 'paises baixos': 'nl',
+  'itália': 'it', 'italia': 'it',
+  'uruguai': 'uy',
+  'chile': 'cl',
+  'paraguai': 'py',
+  'peru': 'pe',
+  'canadá': 'ca', 'canada': 'ca',
+  'coreia do sul': 'kr', 'coréia do sul': 'kr',
+  'marrocos': 'ma',
+  'panamá': 'pa', 'panama': 'pa',
+  'irã': 'ir', 'ira': 'ir',
+  'catar': 'qa', 'qatar': 'qa',
+  'arábia saudita': 'sa', 'arabia saudita': 'sa',
+  'polônia': 'pl', 'polonia': 'pl',
+  'dinamarca': 'dk',
+  'sérvia': 'rs', 'servia': 'rs',
+  'ucrânia': 'ua', 'ucrania': 'ua',
+  'tunísia': 'tn', 'tunisia': 'tn',
+  'jordânia': 'jo', 'jordania': 'jo',
+  'uzbequistão': 'uz', 'uzbequistao': 'uz',
+  'haiti': 'ht',
+  'escócia': 'gb-sct', 'escocia': 'gb-sct',
+  'nova zelândia': 'nz', 'nova zelandia': 'nz',
+  'nigéria': 'ng', 'nigeria': 'ng',
+  'áfrica do sul': 'za', 'africa do sul': 'za',
 };
 
-function obterBandeira(nomeTime) {
-  if (!nomeTime) return '⚽';
-  const chave = nomeTime.trim().toLowerCase();
-  return BANDEIRAS[chave] || '⚽';
+function obterBandeiraHtml(nomeTime) {
+  const chave = (nomeTime || '').trim().toLowerCase();
+  const codigo = CODIGOS_PAIS[chave];
+  if (!codigo) return '<span class="bandeira-fallback">⚽</span>';
+  return `<img class="bandeira" src="https://flagcdn.com/w40/${codigo}.png" alt="${nomeTime}" width="26">`;
 }
 
 function formatarHora(dataStr) {
@@ -402,7 +411,7 @@ function criarCardJogo(jogo) {
       <form class="palpite-form" data-jogo-id="${jogo.id}">
         <div class="confronto">
           <div class="time time-casa">
-            <span class="bandeira">${obterBandeira(jogo.time_casa)}</span>
+            ${obterBandeiraHtml(jogo.time_casa)}
             <span class="nome-time">${jogo.time_casa}</span>
           </div>
           <input type="number" name="placar_casa" min="0" max="20" value="0" required class="placar-time">
@@ -410,7 +419,7 @@ function criarCardJogo(jogo) {
           <input type="number" name="placar_fora" min="0" max="20" value="0" required class="placar-time">
           <div class="time time-fora">
             <span class="nome-time">${jogo.time_fora}</span>
-            <span class="bandeira">${obterBandeira(jogo.time_fora)}</span>
+            ${obterBandeiraHtml(jogo.time_fora)}
           </div>
         </div>
         <div class="nome-e-botao">
