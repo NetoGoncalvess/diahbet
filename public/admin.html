@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiahBet — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pitch:#0B3D2E;
+    --pitch-dark:#082B20;
+    --gold:#D4AF37;
+    --cream:#F7F3E9;
+    --ink:#13201B;
+    --red:#C1440E;
+    --line: rgba(247,243,233,0.14);
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0; background: var(--pitch); color: var(--cream);
+    font-family:'Work Sans', sans-serif; min-height:100vh; padding-bottom:60px;
+  }
+  header{ padding: 30px 20px 20px; text-align:center; border-bottom:1px solid var(--line); }
+  .eyebrow{ font-family:'Space Mono', monospace; letter-spacing:3px; font-size:11px; color:var(--gold); text-transform:uppercase; }
+  h1{ font-family:'Oswald', sans-serif; font-weight:700; font-size:34px; margin:6px 0; }
+  h1 span{ color: var(--gold); }
+  a.voltar{ color: rgba(247,243,233,0.6); font-size:12px; text-decoration:none; }
+
+  main{ max-width: 640px; margin: 28px auto; padding: 0 16px; }
+
+  .painel{
+    background: var(--cream); color: var(--ink); border-radius:6px;
+    padding: 20px; margin-bottom: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  .painel h2{ font-family:'Oswald', sans-serif; font-size:16px; text-transform:uppercase; letter-spacing:1px; margin-top:0; }
+
+  form{ display:flex; flex-direction: column; gap: 10px; }
+  .linha{ display:flex; gap: 10px; }
+  .linha > * { flex: 1; }
+  label{ font-size:11px; font-family:'Space Mono', monospace; text-transform:uppercase; letter-spacing:0.5px; color: rgba(19,32,27,0.6); display:block; margin-bottom:4px; }
+  input, select{
+    width:100%; padding: 9px 10px; border:1px solid rgba(0,0,0,0.15); border-radius:4px;
+    font-family:'Work Sans', sans-serif; font-size: 14px;
+  }
+  button{
+    background: var(--pitch-dark); color: var(--cream); border:none; padding: 11px;
+    border-radius:4px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase;
+    letter-spacing:0.5px; font-size:13px; cursor:pointer;
+  }
+  button:hover{ filter: brightness(1.15); }
+  button.excluir{ background: var(--red); }
+
+  .msg{ font-family:'Space Mono', monospace; font-size:12px; min-height:16px; }
+  .msg.ok{ color:#1e7d32; } .msg.erro{ color:var(--red); }
+
+  .jogo-linha{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border-bottom: 1px solid rgba(0,0,0,0.08); padding: 10px 0; font-size:14px; flex-wrap:wrap;
+  }
+  .jogo-linha .nomes{ font-family:'Oswald', sans-serif; font-weight:600; }
+  .jogo-linha .acoes{ display:flex; gap:6px; align-items:center; }
+  .jogo-linha input[type=number]{ width:48px; padding:6px; text-align:center; }
+  .jogo-linha button{ padding: 7px 10px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Painel do admin</div>
+  <h1>Diah<span>Bet</span></h1>
+  <a class="voltar" href="/">← voltar pro bolão</a>
+</header>
+
+<main>
+  <div class="painel">
+    <h2>Cadastrar novo jogo</h2>
+    <div id="msg-novo" class="msg"></div>
+    <form id="form-novo-jogo">
+      <div class="linha">
+        <div>
+          <label>Time da casa</label>
+          <input type="text" name="time_casa" required placeholder="Ex: Brasil">
+        </div>
+        <div>
+          <label>Time visitante</label>
+          <input type="text" name="time_fora" required placeholder="Ex: Noruega">
+        </div>
+      </div>
+      <div class="linha">
+        <div>
+          <label>Fase</label>
+          <select name="fase">
+            <option value="16-avos de final">16-avos de final</option>
+            <option value="Oitavas de final">Oitavas de final</option>
+            <option value="Quartas de final">Quartas de final</option>
+            <option value="Semifinal">Semifinal</option>
+            <option value="Disputa 3º lugar">Disputa de 3º lugar</option>
+            <option value="Final">Final</option>
+          </select>
+        </div>
+        <div>
+          <label>Data e hora do jogo</label>
+          <input type="datetime-local" name="data_jogo">
+        </div>
+      </div>
+      <button type="submit">Cadastrar jogo</button>
+    </form>
+  </div>
+
+  <div class="painel">
+    <h2>Jogos cadastrados</h2>
+    <div id="lista-jogos">Carregando…</div>
+  </div>
+</main>
+
+<script>
+async function carregarLista() {
+  const container = document.getElementById('lista-jogos');
+  const res = await fetch('/api/jogos');
+  const jogos = await res.json();
+
+  if (!jogos.length) {
+    container.innerHTML = '<p>Nenhum jogo cadastrado ainda.</p>';
+    return;
+  }
+
+  container.innerHTML = jogos.map(j => `
+    <div class="jogo-linha">
+      <div class="nomes">${j.time_casa} x ${j.time_fora} <small style="font-weight:400; opacity:0.6;">(${j.fase || ''})</small></div>
+      <div class="acoes">
+        <label style="margin:0;">Resultado:</label>
+        <input type="number" min="0" id="rc-${j.id}" value="${j.placar_casa_real ?? ''}" placeholder="-">
+        <span>x</span>
+        <input type="number" min="0" id="rf-${j.id}" value="${j.placar_fora_real ?? ''}" placeholder="-">
+        <button onclick="salvarResultado(${j.id})">Salvar</button>
+        <button class="excluir" onclick="excluirJogo(${j.id})">Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('form-novo-jogo').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const msg = document.getElementById('msg-novo');
+  const dados = {
+    time_casa: form.time_casa.value.trim(),
+    time_fora: form.time_fora.value.trim(),
+    fase: form.fase.value,
+    data_jogo: form.data_jogo.value || null
+  };
+  try {
+    const res = await fetch('/api/jogos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+    if (!res.ok) throw new Error();
+    msg.textContent = 'Jogo cadastrado!';
+    msg.className = 'msg ok';
+    form.reset();
+    carregarLista();
+  } catch (err) {
+    msg.textContent = 'Erro ao cadastrar jogo.';
+    msg.className = 'msg erro';
+  }
+});
+
+async function salvarResultado(id) {
+  const placar_casa_real = document.getElementById(`rc-${id}`).value;
+  const placar_fora_real = document.getElementById(`rf-${id}`).value;
+  await fetch(`/api/jogos/${id}/resultado`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      placar_casa_real: placar_casa_real === '' ? null : parseInt(placar_casa_real, 10),
+      placar_fora_real: placar_fora_real === '' ? null : parseInt(placar_fora_real, 10)
+    })
+  });
+  carregarLista();
+}
+
+async function excluirJogo(id) {
+  if (!confirm('Excluir esse jogo e todos os palpites dele?')) return;
+  await fetch(`/api/jogos/${id}`, { method: 'DELETE' });
+  carregarLista();
+}
+
+carregarLista();
+</script>
+</body>
+</html>
