@@ -112,6 +112,17 @@ app.delete('/api/jogos/:id', async (req, res) => {
   }
 });
 
+// Remove TODOS os jogos (e palpites, por cascade) - usar com cuidado, serve pra resetar/limpar duplicados
+app.delete('/api/jogos', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM jogos');
+    res.json({ ok: true, mensagem: 'Todos os jogos foram removidos' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao limpar jogos' });
+  }
+});
+
 // ---------- ROTAS DE PALPITES ----------
 
 // Lista os palpites de um jogo

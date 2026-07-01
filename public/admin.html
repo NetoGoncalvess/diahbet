@@ -110,6 +110,7 @@
 
   <div class="painel">
     <h2>Jogos cadastrados</h2>
+    <button class="excluir" onclick="excluirTodos()" style="margin-bottom:14px; width:auto; padding:9px 14px;">Excluir todos os jogos</button>
     <div id="lista-jogos">Carregando…</div>
   </div>
 </main>
@@ -184,6 +185,12 @@ async function salvarResultado(id) {
 async function excluirJogo(id) {
   if (!confirm('Excluir esse jogo e todos os palpites dele?')) return;
   await fetch(`/api/jogos/${id}`, { method: 'DELETE' });
+  carregarLista();
+}
+
+async function excluirTodos() {
+  if (!confirm('Isso vai excluir TODOS os jogos e TODOS os palpites cadastrados. Tem certeza?')) return;
+  await fetch('/api/jogos', { method: 'DELETE' });
   carregarLista();
 }
 
