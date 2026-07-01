@@ -89,20 +89,6 @@
     font-size: 13px;
   }
 
-  .dia-secao{ margin-bottom: 8px; }
-  .dia-cabecalho{
-    font-family:'Oswald', sans-serif;
-    font-weight: 600;
-    font-size: 15px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--gold);
-    padding: 10px 4px 10px;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 14px;
-    margin-top: 8px;
-  }
-
   .jogo-card{
     background: var(--cream);
     color: var(--ink);
@@ -273,58 +259,18 @@ async function carregarJogos() {
     }
 
     container.innerHTML = '';
-
-    // Agrupa os jogos por dia (sem passar pelo fuso do navegador, usa a data literal salva)
-    const grupos = new Map();
     for (const jogo of jogos) {
-      const chave = obterChaveDia(jogo.data_jogo);
-      if (!grupos.has(chave)) grupos.set(chave, []);
-      grupos.get(chave).push(jogo);
-    }
-
-    for (const [chave, jogosDoDia] of grupos) {
-      const secao = document.createElement('section');
-      secao.className = 'dia-secao';
-
-      const cabecalho = document.createElement('div');
-      cabecalho.className = 'dia-cabecalho';
-      cabecalho.textContent = formatarCabecalhoDia(chave);
-      secao.appendChild(cabecalho);
-
-      for (const jogo of jogosDoDia) {
-        secao.appendChild(criarCardJogo(jogo));
-      }
-
-      container.appendChild(secao);
+      container.appendChild(criarCardJogo(jogo));
     }
   } catch (err) {
     container.innerHTML = '<div class="empty">Erro ao carregar os jogos. Tenta de novo em alguns segundos.</div>';
   }
 }
 
-// Extrai a data (AAAA-MM-DD) direto da string, sem conversao de fuso horario.
-// Os horarios sao cadastrados ja no horario de Manaus, entao exibimos literal.
-function obterChaveDia(dataStr) {
-  if (!dataStr) return 'sem-data';
-  return dataStr.split('T')[0];
-}
-
-function formatarCabecalhoDia(chave) {
-  if (chave === 'sem-data') return 'Data a definir';
-  const [ano, mes, dia] = chave.split('-').map(Number);
-  const dataLocal = new Date(ano, mes - 1, dia);
-  const diaSemana = dataLocal.toLocaleDateString('pt-BR', { weekday: 'long' });
-  const diaSemanaCap = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
-  return `${diaSemanaCap}, ${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}`;
-}
-
-// Mostra so a hora (horario de Manaus), literal, sem conversao pelo fuso do navegador
-function formatarHora(dataStr) {
+function formatarData(dataStr) {
   if (!dataStr) return '';
-  const partes = dataStr.split('T');
-  if (partes.length < 2) return '';
-  const [hora, minuto] = partes[1].split(':');
-  return `${hora}:${minuto} (Manaus)`;
+  const d = new Date(dataStr);
+  return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 function criarCardJogo(jogo) {
@@ -336,7 +282,7 @@ function criarCardJogo(jogo) {
   card.innerHTML = `
     <div class="jogo-fase">
       <span>${jogo.fase || 'Mata-mata'}</span>
-      <span class="data">${formatarHora(jogo.data_jogo)}</span>
+      <span class="data">${formatarData(jogo.data_jogo)}</span>
     </div>
     <div class="jogo-body">
       <div class="times">
