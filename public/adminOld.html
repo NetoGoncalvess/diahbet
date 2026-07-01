@@ -135,10 +135,6 @@ async function carregarLista() {
         <span>x</span>
         <input type="number" min="0" id="rf-${j.id}" value="${j.placar_fora_real ?? ''}" placeholder="-">
         <button onclick="salvarResultado(${j.id})">Salvar</button>
-        <label style="margin:0; display:flex; align-items:center; gap:4px; cursor:pointer;">
-          <input type="checkbox" id="cr-${j.id}" ${j.conta_ranking ? 'checked' : ''} onchange="salvarContaRanking(${j.id})" style="width:auto;">
-          Conta ranking
-        </label>
         <button class="excluir" onclick="excluirJogo(${j.id})">Excluir</button>
       </div>
     </div>
@@ -184,15 +180,6 @@ async function salvarResultado(id) {
     })
   });
   carregarLista();
-}
-
-async function salvarContaRanking(id) {
-  const checkbox = document.getElementById(`cr-${id}`);
-  await fetch(`/api/jogos/${id}/conta-ranking`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ conta_ranking: checkbox.checked })
-  });
 }
 
 async function excluirJogo(id) {

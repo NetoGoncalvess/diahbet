@@ -206,6 +206,15 @@
     margin-bottom: 12px;
     letter-spacing: 1px;
   }
+  .aviso-sem-ranking{
+    text-align:center;
+    font-family:'Space Mono', monospace;
+    font-size: 11px;
+    color: rgba(19,32,27,0.5);
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
 
   button.enviar{
     background: var(--red);
@@ -261,6 +270,12 @@
   .palpite-item .placar{
     font-family:'Space Mono', monospace;
     font-weight: 700;
+  }
+  .palpite-item .hora-palpite{
+    font-family:'Space Mono', monospace;
+    font-size: 10px;
+    color: rgba(19,32,27,0.45);
+    white-space: nowrap;
   }
   .palpite-item .selo{
     font-family:'Space Mono', monospace;
@@ -431,6 +446,16 @@ function obterBandeiraHtml(nomeTime) {
   return `<img class="bandeira" src="https://flagcdn.com/w40/${codigo}.png" alt="${nomeTime}" width="26">`;
 }
 
+// Formata o timestamp criado_em do palpite (vem em UTC do Postgres) pro horario local do navegador
+function formatarHoraPalpite(criadoEm) {
+  if (!criadoEm) return '';
+  const data = new Date(criadoEm);
+  if (isNaN(data.getTime())) return '';
+  return data.toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+
 function formatarHora(dataStr) {
   if (!dataStr) return '';
   const partes = dataStr.split('T');
@@ -452,6 +477,7 @@ function criarCardJogo(jogo) {
     </div>
     <div class="jogo-body">
       ${temResultado ? `<div class="resultado-real">RESULTADO: ${jogo.placar_casa_real} x ${jogo.placar_fora_real}</div>` : ''}
+      ${jogo.conta_ranking === false ? `<div class="aviso-sem-ranking">Este jogo não conta pro ranking</div>` : ''}
 
       <form class="palpite-form" data-jogo-id="${jogo.id}">
         <div class="confronto">
@@ -510,7 +536,15 @@ async function enviarPalpite(e, jogo) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, placar_casa, placar_fora })
     });
+
+    if (res.status === 409) {
+      msg.textContent = 'Você já chutou nesse jogo — não é possível alterar o palpite.';
+      msg.className = 'msg erro';
+      carregarPalpites(jogo);
+      return;
+    }
     if (!res.ok) throw new Error();
+
     msg.textContent = `Palpite salvo: ${nome} — ${placar_casa} x ${placar_fora}`;
     msg.className = 'msg ok';
     carregarPalpites(jogo);
@@ -557,6 +591,7 @@ async function carregarPalpites(jogo) {
           <span class="palpite-info">
             ${selo ? `<span class="selo">${selo}</span>` : ''}
             <span class="placar">${p.placar_casa} x ${p.placar_fora}</span>
+            <span class="hora-palpite">${formatarHoraPalpite(p.criado_em)}</span>
           </span>
         </div>
       `;

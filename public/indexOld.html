@@ -343,6 +343,11 @@ async function carregarJogos() {
 
       container.appendChild(secao);
     }
+
+    // So agora os cards estao no DOM - pode buscar os palpites de cada jogo
+    for (const jogo of jogos) {
+      carregarPalpites(jogo);
+    }
   } catch (err) {
     container.innerHTML = '<div class="empty">Erro ao carregar os jogos. Tenta de novo em alguns segundos.</div>';
   }
@@ -478,8 +483,6 @@ function criarCardJogo(jogo) {
 
   const form = card.querySelector('form');
   form.addEventListener('submit', (e) => enviarPalpite(e, jogo));
-
-  carregarPalpites(jogo);
 
   return card;
 }

@@ -30,14 +30,8 @@ async function initDb() {
       data_jogo TIMESTAMP,
       placar_casa_real INTEGER,
       placar_fora_real INTEGER,
-      conta_ranking BOOLEAN NOT NULL DEFAULT TRUE,
       criado_em TIMESTAMP DEFAULT NOW()
     );
-  `);
-
-  // Garante a coluna em bancos que ja existiam antes dessa alteracao
-  await pool.query(`
-    ALTER TABLE jogos ADD COLUMN IF NOT EXISTS conta_ranking BOOLEAN NOT NULL DEFAULT TRUE;
   `);
 
   await pool.query(`
@@ -107,25 +101,6 @@ app.put('/api/jogos/:id/resultado', async (req, res) => {
   }
 });
 
-// Marca se o jogo conta ou nao pro ranking (admin) - usado pra excluir jogos antigos/de teste
-app.put('/api/jogos/:id/conta-ranking', async (req, res) => {
-  const { id } = req.params;
-  const { conta_ranking } = req.body;
-  try {
-    const result = await pool.query(
-      `UPDATE jogos SET conta_ranking = $1 WHERE id = $2 RETURNING *`,
-      [!!conta_ranking, id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ erro: 'Jogo nao encontrado' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao atualizar conta_ranking' });
-  }
-});
-
 // Remove um jogo (admin)
 app.delete('/api/jogos/:id', async (req, res) => {
   try {
@@ -177,24 +152,26 @@ app.post('/api/jogos/:id/palpites', async (req, res) => {
   }
 
   try {
-    // Se a mesma pessoa (mesmo nome) ja palpitou nesse jogo, nao deixa palpitar de novo
+    // Se a mesma pessoa (mesmo nome) ja palpitou nesse jogo, atualiza o palpite
     const existente = await pool.query(
-      'SELECT id, placar_casa, placar_fora, criado_em FROM palpites WHERE jogo_id = $1 AND LOWER(nome) = LOWER($2)',
+      'SELECT id FROM palpites WHERE jogo_id = $1 AND LOWER(nome) = LOWER($2)',
       [jogoId, nome.trim()]
     );
 
+    let result;
     if (existente.rows.length > 0) {
-      return res.status(409).json({
-        erro: 'Voce ja registrou um palpite pra esse jogo e nao pode altera-lo.',
-        palpite: existente.rows[0]
-      });
+      result = await pool.query(
+        `UPDATE palpites SET placar_casa = $1, placar_fora = $2, criado_em = NOW()
+         WHERE id = $3 RETURNING *`,
+        [placar_casa, placar_fora, existente.rows[0].id]
+      );
+    } else {
+      result = await pool.query(
+        `INSERT INTO palpites (jogo_id, nome, placar_casa, placar_fora)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [jogoId, nome.trim(), placar_casa, placar_fora]
+      );
     }
-
-    const result = await pool.query(
-      `INSERT INTO palpites (jogo_id, nome, placar_casa, placar_fora)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [jogoId, nome.trim(), placar_casa, placar_fora]
-    );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -222,7 +199,6 @@ app.get('/api/ranking', async (req, res) => {
         ) AS acertou_vencedor
       FROM palpites p
       JOIN jogos j ON j.id = p.jogo_id
-      WHERE j.conta_ranking = TRUE
       GROUP BY p.nome
       ORDER BY placar_exato DESC, acertou_vencedor DESC
     `);
