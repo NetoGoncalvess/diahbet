@@ -8,13 +8,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --pitch:#0B3D2E;
-    --pitch-dark:#082B20;
-    --gold:#D4AF37;
-    --cream:#F7F3E9;
-    --ink:#13201B;
+    --pitch:#0A0C09;
+    --pitch-dark:#050605;
+    --gold:#8FD13F;
+    --cream:#F4F6F0;
+    --ink:#10140D;
     --red:#C1440E;
-    --line: rgba(247,243,233,0.14);
+    --line: rgba(244,246,240,0.12);
   }
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; }
@@ -29,9 +29,18 @@
   }
 
   header{
-    padding: 36px 20px 24px;
+    padding: 0 0 24px;
     text-align:center;
     border-bottom: 1px solid var(--line);
+  }
+  .banner{
+    width: 100%;
+    max-width: 900px;
+    display: block;
+    margin: 0 auto 20px;
+  }
+  .header-texto{
+    padding: 0 20px;
   }
   .eyebrow{
     font-family:'Space Mono', monospace;
@@ -229,14 +238,12 @@
     border-top: 1px dashed rgba(0,0,0,0.15);
     padding-top: 10px;
   }
-  .palpites-lista summary{
-    cursor: pointer;
+  .palpites-titulo{
     font-family:'Space Mono', monospace;
     font-size: 11px;
     letter-spacing: 1px;
     text-transform: uppercase;
     color: rgba(19,32,27,0.6);
-    outline: none;
   }
   .palpite-item{
     display:flex;
@@ -284,9 +291,12 @@
 <body>
 
 <header>
-  <div class="eyebrow">Copa do Mundo 2026 · Fase Mata-Mata</div>
-  <h1>Diah<span>Bet</span></h1>
-  <p class="subtitle">Chuta o placar dos jogos e mostra que sabe de futebol. Só o nome, sem senha, sem enrolação.</p>
+  <img class="banner" src="/img/banner.png" alt="DiahBet - Sua aposta, sua vitória">
+  <div class="header-texto">
+    <div class="eyebrow">Copa do Mundo 2026 · Fase Mata-Mata</div>
+    <h1>Diah<span>Bet</span></h1>
+    <p class="subtitle">Chuta o placar dos jogos e mostra que sabe de futebol. Só o nome, sem senha, sem enrolação.</p>
+  </div>
 </header>
 
 <main>
@@ -459,10 +469,10 @@ function criarCardJogo(jogo) {
       </form>
       <div class="msg" id="msg-${jogo.id}"></div>
 
-      <details class="palpites-lista">
-        <summary id="resumo-${jogo.id}">ver palpites</summary>
+      <div class="palpites-lista">
+        <div class="palpites-titulo" id="resumo-${jogo.id}">Palpites</div>
         <div id="lista-${jogo.id}"></div>
-      </details>
+      </div>
     </div>
   `;
 
@@ -517,7 +527,7 @@ async function carregarPalpites(jogo) {
   try {
     const res = await fetch(`/api/jogos/${jogo.id}/palpites`);
     const palpites = await res.json();
-    resumo.textContent = `ver palpites (${palpites.length})`;
+    resumo.textContent = `Palpites (${palpites.length})`;
 
     lista.innerHTML = palpites.map(p => {
       let classeExtra = '';
