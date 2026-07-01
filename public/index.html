@@ -128,23 +128,58 @@
   .jogo-body{
     padding: 18px 20px 20px;
   }
-  .times{
+  .confronto{
     display:flex;
     align-items:center;
     justify-content: center;
-    gap: 18px;
-    font-family:'Oswald', sans-serif;
-    font-weight: 600;
-    font-size: 20px;
-    text-transform: uppercase;
+    gap: 10px;
     margin-bottom: 16px;
     flex-wrap: wrap;
   }
-  .times .vs{
+  .time{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-family:'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    text-transform: uppercase;
+  }
+  .time-casa{ justify-content: flex-end; flex: 1 1 auto; }
+  .time-fora{ justify-content: flex-start; flex: 1 1 auto; }
+  .bandeira{ font-size: 22px; line-height: 1; }
+  .confronto .vs{
     font-family:'Space Mono', monospace;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--red);
     font-weight: 700;
+  }
+  .placar-time{
+    width: 40px;
+    text-align:center;
+    font-family:'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--gold);
+    border: none;
+    border-radius: 4px;
+    padding: 6px 0;
+  }
+  .nome-e-botao{
+    display:flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .nome-e-botao input[type=text]{
+    flex: 1 1 160px;
+    padding: 10px 12px;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 4px;
+    font-family:'Work Sans', sans-serif;
+    font-size: 14px;
   }
   .resultado-real{
     text-align:center;
@@ -154,43 +189,6 @@
     margin-bottom: 12px;
     letter-spacing: 1px;
   }
-
-  .palpite-form{
-    display:flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 14px;
-  }
-  .palpite-form input[type=text]{
-    flex: 1 1 160px;
-    padding: 10px 12px;
-    border: 1px solid rgba(0,0,0,0.15);
-    border-radius: 4px;
-    font-family:'Work Sans', sans-serif;
-    font-size: 14px;
-  }
-  .placar-input{
-    display:flex;
-    align-items:center;
-    gap: 6px;
-    background: var(--ink);
-    padding: 6px 10px;
-    border-radius: 4px;
-  }
-  .placar-input input[type=number]{
-    width: 42px;
-    text-align:center;
-    font-family:'Space Mono', monospace;
-    font-size: 20px;
-    font-weight: 700;
-    background: transparent;
-    color: var(--gold);
-    border: none;
-    outline: none;
-  }
-  .placar-input span{ color: var(--cream); font-family:'Space Mono', monospace; }
 
   button.enviar{
     background: var(--red);
@@ -318,7 +316,67 @@ function formatarCabecalhoDia(chave) {
   return `${diaSemanaCap}, ${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}`;
 }
 
-// Mostra so a hora (horario de Manaus), literal, sem conversao pelo fuso do navegador
+// Mapa de bandeiras por nome de pais/selecao (em portugues, como cadastrado no admin)
+const BANDEIRAS = {
+  'méxico': '🇲🇽', 'mexico': '🇲🇽',
+  'equador': '🇪🇨',
+  'inglaterra': '🏴',
+  'rd congo': '🇨🇩', 'r.d. congo': '🇨🇩', 'república democrática do congo': '🇨🇩',
+  'bélgica': '🇧🇪', 'belgica': '🇧🇪',
+  'senegal': '🇸🇳',
+  'estados unidos': '🇺🇸', 'eua': '🇺🇸',
+  'bósnia e herzegovina': '🇧🇦', 'bosnia e herzegovina': '🇧🇦',
+  'espanha': '🇪🇸',
+  'áustria': '🇦🇹', 'austria': '🇦🇹',
+  'portugal': '🇵🇹',
+  'croácia': '🇭🇷', 'croacia': '🇭🇷',
+  'suíça': '🇨🇭', 'suica': '🇨🇭',
+  'argélia': '🇩🇿', 'argelia': '🇩🇿',
+  'austrália': '🇦🇺', 'australia': '🇦🇺',
+  'egito': '🇪🇬',
+  'argentina': '🇦🇷',
+  'cabo verde': '🇨🇻',
+  'colômbia': '🇨🇴', 'colombia': '🇨🇴',
+  'gana': '🇬🇭',
+  'brasil': '🇧🇷',
+  'noruega': '🇳🇴',
+  'costa do marfim': '🇨🇮',
+  'japão': '🇯🇵', 'japao': '🇯🇵',
+  'frança': '🇫🇷', 'franca': '🇫🇷',
+  'alemanha': '🇩🇪',
+  'holanda': '🇳🇱', 'países baixos': '🇳🇱', 'paises baixos': '🇳🇱',
+  'itália': '🇮🇹', 'italia': '🇮🇹',
+  'uruguai': '🇺🇾',
+  'chile': '🇨🇱',
+  'paraguai': '🇵🇾',
+  'peru': '🇵🇪',
+  'canadá': '🇨🇦', 'canada': '🇨🇦',
+  'coreia do sul': '🇰🇷', 'coréia do sul': '🇰🇷',
+  'marrocos': '🇲🇦',
+  'panamá': '🇵🇦', 'panama': '🇵🇦',
+  'irã': '🇮🇷', 'ira': '🇮🇷',
+  'catar': '🇶🇦', 'qatar': '🇶🇦',
+  'arábia saudita': '🇸🇦', 'arabia saudita': '🇸🇦',
+  'polônia': '🇵🇱', 'polonia': '🇵🇱',
+  'dinamarca': '🇩🇰',
+  'sérvia': '🇷🇸', 'servia': '🇷🇸',
+  'ucrânia': '🇺🇦', 'ucrania': '🇺🇦',
+  'tunísia': '🇹🇳', 'tunisia': '🇹🇳',
+  'jordânia': '🇯🇴', 'jordania': '🇯🇴',
+  'uzbequistão': '🇺🇿', 'uzbequistao': '🇺🇿',
+  'haiti': '🇭🇹',
+  'escócia': '🏴', 'escocia': '🏴',
+  'nova zelândia': '🇳🇿', 'nova zelandia': '🇳🇿',
+  'nigéria': '🇳🇬', 'nigeria': '🇳🇬',
+  'áfrica do sul': '🇿🇦', 'africa do sul': '🇿🇦',
+};
+
+function obterBandeira(nomeTime) {
+  if (!nomeTime) return '⚽';
+  const chave = nomeTime.trim().toLowerCase();
+  return BANDEIRAS[chave] || '⚽';
+}
+
 function formatarHora(dataStr) {
   if (!dataStr) return '';
   const partes = dataStr.split('T');
@@ -339,21 +397,26 @@ function criarCardJogo(jogo) {
       <span class="data">${formatarHora(jogo.data_jogo)}</span>
     </div>
     <div class="jogo-body">
-      <div class="times">
-        <span>${jogo.time_casa}</span>
-        <span class="vs">VS</span>
-        <span>${jogo.time_fora}</span>
-      </div>
       ${temResultado ? `<div class="resultado-real">RESULTADO: ${jogo.placar_casa_real} x ${jogo.placar_fora_real}</div>` : ''}
 
       <form class="palpite-form" data-jogo-id="${jogo.id}">
-        <input type="text" name="nome" placeholder="Seu nome" required maxlength="40">
-        <div class="placar-input">
-          <input type="number" name="placar_casa" min="0" max="20" value="0" required>
-          <span>x</span>
-          <input type="number" name="placar_fora" min="0" max="20" value="0" required>
+        <div class="confronto">
+          <div class="time time-casa">
+            <span class="bandeira">${obterBandeira(jogo.time_casa)}</span>
+            <span class="nome-time">${jogo.time_casa}</span>
+          </div>
+          <input type="number" name="placar_casa" min="0" max="20" value="0" required class="placar-time">
+          <span class="vs">x</span>
+          <input type="number" name="placar_fora" min="0" max="20" value="0" required class="placar-time">
+          <div class="time time-fora">
+            <span class="nome-time">${jogo.time_fora}</span>
+            <span class="bandeira">${obterBandeira(jogo.time_fora)}</span>
+          </div>
         </div>
-        <button type="submit" class="enviar">Chutar</button>
+        <div class="nome-e-botao">
+          <input type="text" name="nome" placeholder="Seu nome" required maxlength="40">
+          <button type="submit" class="enviar">Chutar</button>
+        </div>
       </form>
       <div class="msg" id="msg-${jogo.id}"></div>
 
